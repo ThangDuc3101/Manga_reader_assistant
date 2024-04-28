@@ -1,0 +1,5 @@
+ultralytics
+streamlit
+streamlit_option_menu
+googletrans==3.1.0a0
+manga-ocr

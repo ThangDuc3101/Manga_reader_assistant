@@ -164,9 +164,10 @@ No changes needed (mostly static display logic).
 pip install -r requirements.txt
 ```
 
-### 2. Prepare Model
-- Download YOLOv8 weights from: [Drive Link in README](https://drive.google.com/file/d/1-XpMOB8wN1j1d57iq6JBLyzAQlPmyLoV/view?usp=drive_link)
-- Save as `yolov8_manga.pt` in project root
+### 2. Set Up Model
+Choose one (see [MODEL_SETUP.md](MODEL_SETUP.md) for details):
+- **Roboflow** (recommended): Get free API key, configure in config.py
+- **YOLOv8s** (no setup): Auto-downloads on first run, set `USE_ROBOFLOW = False`
 
 ### 3. Run App
 ```bash
@@ -249,6 +250,6 @@ If you encounter issues:
 
 1. Check the error message displayed
 2. Look at terminal logs (if running locally)
-3. Verify model file `yolov8_manga.pt` exists
-4. Check internet connection (for translation API)
+3. See [MODEL_SETUP.md](MODEL_SETUP.md) for model configuration
+4. Check internet connection (for translation & Roboflow API)
 5. Ensure Python 3.10+ and all dependencies installed

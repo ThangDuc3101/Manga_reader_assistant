@@ -1,10 +1,19 @@
 import logging
+import os
 from ultralytics import YOLO
 from googletrans import Translator
 from PIL import Image, ImageDraw, ImageFont
 from manga_ocr import MangaOcr
 
 logger = logging.getLogger(__name__)
+
+# Try importing Roboflow (optional)
+try:
+    from roboflow import Roboflow
+    ROBOFLOW_AVAILABLE = True
+except ImportError:
+    ROBOFLOW_AVAILABLE = False
+    logger.warning("Roboflow not installed. Install with: pip install roboflow")
 
 
 class Manga_Reader:
@@ -14,20 +23,75 @@ class Manga_Reader:
     TEXT_COLOR = (255, 0, 0)  # Red in BGR
     MAX_TEXT_LENGTH = 500
     
-    def __init__(self, detector="yolov8_manga.pt"):
+    def __init__(self, use_roboflow=None, model_path=None, api_key=None):
         """
         Initialize Manga Reader with YOLO detector, OCR, and translator.
         
         Parameters:
-            detector (str): Path to YOLO model weights file.
+            use_roboflow (bool): Use Roboflow API if True. If None, uses config.USE_ROBOFLOW
+            model_path (str): Path to YOLO model weights (fallback if Roboflow unavailable)
+            api_key (str): Roboflow API key. If None, uses config.ROBOFLOW_API_KEY
         """
         try:
-            self.model = YOLO(detector)
+            # Import config
+            from config import (USE_ROBOFLOW, ROBOFLOW_API_KEY, ROBOFLOW_MODEL, 
+                               ROBOFLOW_VERSION, FALLBACK_MODEL_PATH, OFFLINE_MODE)
+            
+            # Use provided parameters or fallback to config
+            use_roboflow = use_roboflow if use_roboflow is not None else USE_ROBOFLOW
+            model_path = model_path or FALLBACK_MODEL_PATH
+            api_key = api_key or ROBOFLOW_API_KEY
+            
+            # Try loading model with Roboflow
+            self.model = None
+            if use_roboflow and ROBOFLOW_AVAILABLE:
+                try:
+                    self.model = self._load_roboflow_model(api_key, ROBOFLOW_MODEL, ROBOFLOW_VERSION)
+                    logger.info("Loaded model from Roboflow API")
+                except Exception as e:
+                    logger.warning(f"Roboflow loading failed: {e}. Falling back to YOLOv8s...")
+            
+            # Fallback to YOLOv8 if Roboflow failed or disabled
+            if self.model is None:
+                self.model = YOLO(model_path)
+                logger.info(f"Loaded model from {model_path}")
+            
+            # Initialize OCR and translator
             self.recognizer = MangaOcr()
             self.translator = Translator()
             logger.info("Manga_Reader initialized successfully")
+            
         except Exception as e:
             logger.error(f"Failed to initialize Manga_Reader: {e}")
+            raise
+    
+    def _load_roboflow_model(self, api_key, model_name, version):
+        """
+        Load model from Roboflow API.
+        
+        Parameters:
+            api_key (str): Roboflow API key
+            model_name (str): Model name (e.g., 'manga-bubble-detect')
+            version (int): Model version number
+            
+        Returns:
+            YOLO: Loaded YOLO model object
+        """
+        if not api_key:
+            raise ValueError("ROBOFLOW_API_KEY not configured")
+        
+        try:
+            rf = Roboflow(api_key=api_key)
+            # Access community models (no workspace required for public models)
+            project = rf.workspace().project(model_name)
+            model_obj = project.version(version).model
+            
+            # Convert to YOLO format if needed
+            logger.info(f"Roboflow model loaded: {model_name} v{version}")
+            return model_obj
+            
+        except Exception as e:
+            logger.error(f"Failed to load Roboflow model: {e}")
             raise
     
     def _get_font(self, size=FONT_SIZE):

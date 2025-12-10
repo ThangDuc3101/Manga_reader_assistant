@@ -3,12 +3,30 @@ Configuration file for Manga Reader Application.
 Centralize all hardcoded values here for easy customization.
 """
 
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file (if it exists)
+load_dotenv()
+
 # ============================================================================
 # MODEL & DETECTION SETTINGS
 # ============================================================================
-YOLO_MODEL_PATH = "yolov8_manga.pt"  # Path to YOLO weights
+# Primary: Roboflow Manga Bubble Detector (recommended)
+USE_ROBOFLOW = True  # Use Roboflow API for model loading
+ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")  # Get from .env or environment
+ROBOFLOW_MODEL = os.getenv("ROBOFLOW_MODEL", "manga-bubble-detect")  # Model name
+ROBOFLOW_VERSION = int(os.getenv("ROBOFLOW_VERSION", "1"))  # Model version
+
+# Fallback: Local YOLOv8s model (used if Roboflow unavailable)
+FALLBACK_MODEL_PATH = "yolov8s.pt"  # Auto-downloads from Ultralytics
+MODEL_CACHE_DIR = ".models"  # Cache directory for downloaded models
+OFFLINE_MODE = False  # Set True to use cached weights without API
+
+# Detection parameters
 YOLO_CONFIDENCE = 0.5  # Detection confidence threshold (0-1)
 YOLO_IOU = 0.5  # Intersection over Union threshold
+ROBOFLOW_TIMEOUT = 30  # API request timeout in seconds
 
 # ============================================================================
 # TEXT RECOGNITION & TRANSLATION

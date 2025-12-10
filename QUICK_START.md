@@ -7,9 +7,41 @@
 pip install -r requirements.txt
 ```
 
-### 2️⃣ Download Model
-Download from [Google Drive](https://drive.google.com/file/d/1-XpMOB8wN1j1d57iq6JBLyzAQlPmyLoV/view?usp=drive_link)  
-Save as `yolov8_manga.pt` in project root
+### 2️⃣ Setup Roboflow API Key (2 minutes)
+
+**Step 1: Copy template**
+```bash
+cp .env.example .env
+```
+
+**Step 2: Get API key**
+1. Visit https://roboflow.com/settings/api
+2. Sign up (free) if you don't have account
+3. Copy your "Private API Key"
+
+**Step 3: Edit .env file**
+```bash
+# Edit the file and replace:
+# ROBOFLOW_API_KEY=[REDACTED:api-key]
+# 
+# With your actual key:
+# ROBOFLOW_API_KEY=abc123xyz...
+
+# Linux/Mac:
+nano .env
+
+# Windows:
+notepad .env
+```
+
+**Step 4: Save and done!**
+
+**Alternative: No setup needed**
+- Just skip .env setup
+- App will use YOLOv8s base model (auto-downloads)
+- Set `USE_ROBOFLOW = False` in config.py
+
+See [MODEL_SETUP.md](MODEL_SETUP.md) for more details
 
 ### 3️⃣ Run
 ```bash
@@ -76,32 +108,40 @@ Project info and techniques used
 Edit `config.py` to customize:
 
 ```python
-# Language
-TARGET_LANGUAGE = "vi"        # Vietnamese
+# Model selection
+USE_ROBOFLOW = True           # Use Roboflow API (better) or False for YOLOv8s
+ROBOFLOW_API_KEY = "..."      # Get from roboflow.com/settings/api
 
-# Text styling
+# Language & styling
+TARGET_LANGUAGE = "vi"        # Vietnamese
 FONT_SIZE = 40               # Pixel size
 TEXT_COLOR = (255, 0, 0)     # RGB (red)
 
 # Storage
 OUTPUT_DIR = 'translated'    # Where to save
 
-# API
+# Upload limits
 MAX_FILE_SIZE_MB = 50        # Max upload
 ALLOWED_IMAGE_FORMATS = {'.png', '.jpg', '.jpeg', '.bmp', '.webp'}
 ```
 
-Changes take effect after restart.
+Changes take effect after restart. See [MODEL_SETUP.md](MODEL_SETUP.md) for more options.
 
 ---
 
 ## 🔍 Troubleshooting (Common Issues)
 
 ### ❌ "Model file not found"
-✅ Download from link above, save as `yolov8_manga.pt`
+✅ See [MODEL_SETUP.md](MODEL_SETUP.md) - configure Roboflow or use YOLOv8s
+✅ Or set `USE_ROBOFLOW = False` in config.py to use YOLOv8s base model
+
+### ❌ "API key invalid"
+✅ Get key from [roboflow.com/settings/api](https://roboflow.com/settings/api)
+✅ Set in config.py: `ROBOFLOW_API_KEY = "your_key"`
 
 ### ❌ "Module not found"
 ✅ Run: `pip install -r requirements.txt`
+✅ If roboflow missing: `pip install roboflow`
 
 ### ❌ "Translation failed / slow"
 ✅ This is normal first time (API initialization)  

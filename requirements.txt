@@ -3,9 +3,13 @@ ultralytics==8.0.196  # YOLO object detection
 streamlit==1.28.1     # Web UI framework
 streamlit-option-menu==0.3.2  # Navigation menu
 
+# Model hosting and deployment
+roboflow==0.2.0       # Roboflow API for manga-trained models (recommended)
+
 # Translation - NOTE: googletrans is unofficial wrapper, may be blocked by Google
 # For production, consider switching to Google Cloud Translation API
 google-cloud-translate==3.11.1  # (Optional) Production-grade alternative
+googletrans==4.0.0rc1  # Fallback translation (if Cloud API unavailable)
 
 # OCR and Vision
 manga-ocr==0.1.11     # Manga text recognition
@@ -15,4 +19,4 @@ Pillow==10.0.1        # PIL image handling
 
 # Utilities
 requests==2.31.0      # HTTP library (dependency)
-python-dotenv==1.0.0  # Environment configuration (optional but recommended)
+python-dotenv==1.0.0  # Environment configuration (required for .env support)

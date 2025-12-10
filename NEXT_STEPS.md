@@ -203,12 +203,23 @@ python3 -m py_compile *.py
 pip install -r requirements.txt
 ```
 
-#### Step 3: Download Model (5 min)
+#### Step 3: Set Up Model (5 min)
+Choose one:
+
+**Option A: Roboflow API (Recommended - Better accuracy)**
 ```bash
-# Download from: https://drive.google.com/file/d/1-XpMOB8wN1j1d57iq6JBLyzAQlPmyLoV/view?usp=drive_link
-# Save as: yolov8_manga.pt
-ls -la yolov8_manga.pt  # Verify
+# Get API key from roboflow.com/settings/api
+export ROBOFLOW_API_KEY="your_api_key_here"
+# App will auto-download model
 ```
+
+**Option B: YOLOv8s (No setup needed)**
+```bash
+# Works out of the box, auto-downloads on first run
+# Set in config.py: USE_ROBOFLOW = False
+```
+
+See [MODEL_SETUP.md](MODEL_SETUP.md) for details
 
 #### Step 4: Test Run (5 min)
 ```bash
@@ -234,12 +245,13 @@ streamlit run main.py --server.port 8080
 
 Before deploying, verify:
 - [ ] All 6 Python files present
-- [ ] All 8 documentation files present
-- [ ] requirements.txt has pinned versions
-- [ ] config.py exists and is customized
-- [ ] Model file yolov8_manga.pt exists (50MB+)
+- [ ] All 9 documentation files present (including MODEL_SETUP.md)
+- [ ] requirements.txt has pinned versions (includes roboflow)
+- [ ] config.py exists with Roboflow settings
+- [ ] Roboflow API key obtained and configured
 - [ ] `translated/` directory exists or will be created
 - [ ] All tests pass (syntax check)
+- [ ] Model loading works (Roboflow or YOLOv8s fallback)
 - [ ] Setup on target machine verified
 - [ ] User access documented
 
@@ -368,7 +380,8 @@ Before deploying, verify:
 
 ### Project Resources
 - **Repository**: https://github.com/ThangDuc3101/Manga_reader_assistant
-- **Model Weights**: https://drive.google.com/file/d/1-XpMOB8wN1j1d57iq6JBLyzAQlPmyLoV/view?usp=drive_link
+- **Model Source**: Roboflow (manga-bubble-detect) or YOLOv8s
+- **Roboflow API**: https://roboflow.com/settings/api
 - **Main Branch**: master (production)
 - **Development**: develop (for Phase 2)
 

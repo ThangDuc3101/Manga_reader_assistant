@@ -36,25 +36,33 @@ pip install -r requirements.txt
 
 **Note**: First install will take 5-10 minutes (downloads ML models).
 
-### 4. Download YOLO Model Weights
-Download from: https://drive.google.com/file/d/1-XpMOB8wN1j1d57iq6JBLyzAQlPmyLoV/view?usp=drive_link
+### 4. Set Up Model (Choose One)
 
-Save file as `yolov8_manga.pt` in project root:
+**Option A: Roboflow API (Recommended)** - Better accuracy for manga
+```bash
+# 1. Get free API key from https://roboflow.com/settings/api
+# 2. Set environment variable or in config.py:
+export ROBOFLOW_API_KEY="your_api_key_here"
+
+# 3. Verify
+python -c "from roboflow import Roboflow; print('✓ Roboflow installed')"
 ```
-Manga_reader_assistant/
-├── yolov8_manga.pt     ← Place downloaded file here
-├── main.py
-├── reader.py
-└── ...
+
+**Option B: YOLOv8s Base Model** - No setup, auto-downloads
+```bash
+# Works out of the box, no additional steps needed
+# App will auto-download on first run (~20MB)
 ```
+
+See [MODEL_SETUP.md](MODEL_SETUP.md) for detailed instructions.
 
 ### 5. Verify Installation
 ```bash
 # Test Python imports
 python -c "import streamlit; import ultralytics; import manga_ocr; print('✓ All imports OK')"
 
-# Check YOLO model
-python -c "from ultralytics import YOLO; YOLO('yolov8_manga.pt'); print('✓ Model loaded')"
+# Test model loading (will use default from config.py)
+python -c "from reader import Manga_Reader; reader = Manga_Reader(); print('✓ Model loaded')"
 ```
 
 ---
@@ -161,18 +169,21 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 # Restart app - YOLO will auto-detect GPU
 ```
 
-### Change YOLO Model Size
+### Switch Between Model Sources
 ```python
-# In reader.py, change:
-self.model = YOLO("yolov8_manga.pt")  # Current
+# In config.py, change:
 
-# To one of:
-self.model = YOLO("yolov8n_manga.pt")  # Nano (fast, less accurate)
-self.model = YOLO("yolov8s_manga.pt")  # Small
-self.model = YOLO("yolov8m_manga.pt")  # Medium
-self.model = YOLO("yolov8l_manga.pt")  # Large (current)
-self.model = YOLO("yolov8x_manga.pt")  # Extra Large (slow, most accurate)
+# Use Roboflow (recommended - better for manga)
+USE_ROBOFLOW = True
+ROBOFLOW_API_KEY = "your_api_key_here"
+ROBOFLOW_MODEL = "manga-bubble-detect"
+
+# Or use YOLOv8s base model (no setup)
+USE_ROBOFLOW = False
+FALLBACK_MODEL_PATH = "yolov8s.pt"
 ```
+
+See [MODEL_SETUP.md](MODEL_SETUP.md) for more model options.
 
 ---
 
@@ -180,12 +191,13 @@ self.model = YOLO("yolov8x_manga.pt")  # Extra Large (slow, most accurate)
 
 ### Issue: "Model file not found"
 ```
-Error: yolov8_manga.pt not found
+Error: Model loading failed
 ```
 **Solution**: 
-- Download model from link in README
-- Save as `yolov8_manga.pt` in project root
-- Run from correct directory
+- See [MODEL_SETUP.md](MODEL_SETUP.md) for model setup
+- Option A: Configure Roboflow API (recommended)
+- Option B: Use YOLOv8s base model (`USE_ROBOFLOW = False` in config.py)
+- Make sure `requirements.txt` is installed
 
 ### Issue: "No TrueType font found"
 ```
@@ -285,7 +297,9 @@ Manga_reader_assistant/
 ├── CRITICAL_FIXES.md    # What was fixed (NEW)
 ├── SETUP_GUIDE.md       # This file (NEW)
 │
-├── yolov8_manga.pt      # YOLO model weights (download)
+├── .models/             # Model cache (auto-created)
+│   └── yolov8s.pt       # Fallback model (auto-downloaded)
+│   └── roboflow/        # Roboflow cache (if using API)
 ├── translated/          # Output folder (auto-created)
 ├── test/                # Test images
 ├── img/                 # Documentation images
@@ -368,7 +382,8 @@ TRANSLATION_API_TIMEOUT = 60  # Wait longer between requests
 - [ ] Python 3.10+ installed
 - [ ] Virtual environment created and activated
 - [ ] Dependencies installed (`pip install -r requirements.txt`)
-- [ ] Model file `yolov8_manga.pt` downloaded and placed
+- [ ] Model configured (Roboflow or YOLOv8s) - see MODEL_SETUP.md
+- [ ] Roboflow API key set (if using Roboflow option)
 - [ ] Imports verified successfully
 - [ ] App starts without errors (`streamlit run main.py`)
 - [ ] Can upload test image without crashes

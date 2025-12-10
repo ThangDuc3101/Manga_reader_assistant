@@ -37,11 +37,16 @@ Use this checklist to verify all critical fixes are working properly.
   # Should have no output
   ```
 
-- [ ] Model file downloaded and placed
+- [ ] Model configured (Roboflow or YOLOv8s)
   ```bash
-  ls -la yolov8_manga.pt
-  # Should show file exists
+  # Option A: Check Roboflow API key is set
+  echo $ROBOFLOW_API_KEY
+  
+  # Option B: Or verify config.py has proper settings
+  grep -A 3 "USE_ROBOFLOW\|FALLBACK_MODEL_PATH" config.py
   ```
+  
+  See [MODEL_SETUP.md](MODEL_SETUP.md) for detailed setup
 
 ---
 

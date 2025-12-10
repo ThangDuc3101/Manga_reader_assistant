@@ -1,5 +1,18 @@
-ultralytics
-streamlit
-streamlit_option_menu
-googletrans==3.1.0a0
-manga-ocr
+# Core dependencies - pinned for stability
+ultralytics==8.0.196  # YOLO object detection
+streamlit==1.28.1     # Web UI framework
+streamlit-option-menu==0.3.2  # Navigation menu
+
+# Translation - NOTE: googletrans is unofficial wrapper, may be blocked by Google
+# For production, consider switching to Google Cloud Translation API
+google-cloud-translate==3.11.1  # (Optional) Production-grade alternative
+
+# OCR and Vision
+manga-ocr==0.1.11     # Manga text recognition
+
+# Image processing
+Pillow==10.0.1        # PIL image handling
+
+# Utilities
+requests==2.31.0      # HTTP library (dependency)
+python-dotenv==1.0.0  # Environment configuration (optional but recommended)

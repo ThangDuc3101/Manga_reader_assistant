@@ -58,19 +58,28 @@ MAX_FILE_SIZE_MB = 50
 OUTPUT_DIR = 'translated'  # Directory to save translated images
 
 # ============================================================================
-# TRANSLATION API SETTINGS
+# TRANSLATION API - STABLE & PRODUCTION-READY (Phase 2, Task 3)
 # ============================================================================
-# NOTE: googletrans is unofficial and may be blocked by Google
-# For production, use Google Cloud Translation API instead
 
-TRANSLATION_API_TIMEOUT = 30  # seconds
-TRANSLATION_MAX_RETRIES = 3  # retry failed translations
+# Primary API: Google Cloud Translation (recommended for production)
+USE_GOOGLE_CLOUD_API = os.getenv("USE_GOOGLE_CLOUD_API", "false").lower() == "true"
+GOOGLE_CLOUD_PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT_ID")
+GOOGLE_CLOUD_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
-# Google Cloud Translation (optional, more stable)
-# Requires: pip install google-cloud-translate
-# Set GOOGLE_APPLICATION_CREDENTIALS environment variable
-USE_GOOGLE_CLOUD_API = False  # Set True to use Cloud API instead of googletrans
-GOOGLE_CLOUD_PROJECT_ID = None  # Required if USE_GOOGLE_CLOUD_API=True
+# Fallback: googletrans (works when Cloud API unavailable)
+USE_GOOGLETRANS_FALLBACK = True  # Always keep as backup
+
+# Retry configuration (exponential backoff)
+TRANSLATION_MAX_RETRIES = int(os.getenv("TRANSLATION_MAX_RETRIES", "3"))
+TRANSLATION_RETRY_BACKOFF = float(os.getenv("TRANSLATION_RETRY_BACKOFF", "1.0"))
+
+# Cache configuration (file-based, persistent)
+ENABLE_TRANSLATION_CACHE = os.getenv("ENABLE_TRANSLATION_CACHE", "true").lower() == "true"
+CACHE_FILE_PATH = ".translation_cache.json"  # Git-ignored, local cache
+CACHE_SIZE_LIMIT = int(os.getenv("CACHE_SIZE_LIMIT", "10000"))
+
+# Timeout settings
+TRANSLATION_API_TIMEOUT = int(os.getenv("TRANSLATION_API_TIMEOUT", "30"))
 
 # ============================================================================
 # STREAMLIT UI SETTINGS

@@ -1,7 +1,7 @@
 import logging
 import os
 from ultralytics import YOLO
-from googletrans import Translator
+from translation_manager import TranslationManager
 from PIL import Image, ImageDraw, ImageFont
 from manga_ocr import MangaOcr
 
@@ -58,7 +58,7 @@ class Manga_Reader:
             
             # Initialize OCR and translator
             self.recognizer = MangaOcr()
-            self.translator = Translator()
+            self.translator = TranslationManager()
             logger.info("Manga_Reader initialized successfully")
             
         except Exception as e:

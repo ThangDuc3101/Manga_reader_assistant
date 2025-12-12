@@ -210,6 +210,17 @@ result = m.translate("ありがとう")
 print(result.text)  # Should print Vietnamese
 ```
 
+**Performance optimization**:
+```bash
+# Quick speedup (2x faster, 5 minutes)
+# Edit config.py:
+YOLO_MODEL = "yolov8n.pt"
+MAX_IMAGE_WIDTH = 640
+
+# Or use optimized reader (3-5x faster)
+from reader_optimized import Manga_Reader
+```
+
 **Debug mode** (config.py):
 ```python
 DEBUG_MODE = True

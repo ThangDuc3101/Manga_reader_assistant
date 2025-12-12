@@ -117,3 +117,37 @@ ENABLE_EXPORT_PDF = False  # Export results as PDF
 DEBUG_MODE = False  # Show debug info, don't cache models
 SAVE_INTERMEDIATES = False  # Save detection masks, crops, etc. for debugging
 PROFILE_PERFORMANCE = False  # Measure execution time for each step
+
+# ============================================================================
+# PERFORMANCE OPTIMIZATION (Task 2.4)
+# ============================================================================
+
+# Image Preprocessing
+USE_OPENCV = False  # True = faster preprocessing (if cv2 available)
+MAX_IMAGE_WIDTH = 0  # Max width before resize (0 = no limit)
+MAX_IMAGE_HEIGHT = 0  # Max height before resize (0 = no limit)
+PRESERVE_ASPECT_RATIO = True  # Maintain aspect ratio when resizing
+
+# Model Selection & Caching
+YOLO_MODEL = "yolov8s.pt"  # Options: yolov8n (fast), yolov8s (balanced), yolov8m (accurate)
+ENABLE_MODEL_CACHE = True  # Cache model in memory between images
+MODEL_CACHE_TIMEOUT = 300  # Cache timeout in seconds
+
+# Translation & Batch Processing
+ADAPTIVE_BATCH_SIZE = True  # Adjust batch size based on text count
+MAX_BATCH_SIZE = 30  # Maximum texts per API call (higher = faster)
+
+# GPU Support
+USE_GPU = False  # Enable GPU acceleration (requires CUDA/PyTorch)
+GPU_DEVICE_ID = 0  # Which GPU to use (0=first GPU)
+GPU_MEMORY_FRACTION = 0.8  # Max fraction of GPU memory to use
+
+# Async Processing
+ENABLE_ASYNC_PROCESSING = False  # Experimental: async pipeline
+NUM_WORKER_THREADS = 2  # Worker threads for async processing
+
+# Memory & Performance
+OPTIMIZE_MEMORY = True  # Release unused memory aggressively
+OCR_BATCH_SIZE = 3  # Process N textboxes in parallel (OCR)
+SKIP_SMALL_TEXTBOXES = False  # Skip boxes < 50px (too small to read)
+MIN_TEXTBOX_SIZE = 30  # Minimum textbox size in pixels

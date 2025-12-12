@@ -124,12 +124,12 @@ PROFILE_PERFORMANCE = False  # Measure execution time for each step
 
 # Image Preprocessing
 USE_OPENCV = False  # True = faster preprocessing (if cv2 available)
-MAX_IMAGE_WIDTH = 0  # Max width before resize (0 = no limit)
+MAX_IMAGE_WIDTH = 640  # Max width before resize (0 = no limit)
 MAX_IMAGE_HEIGHT = 0  # Max height before resize (0 = no limit)
 PRESERVE_ASPECT_RATIO = True  # Maintain aspect ratio when resizing
 
 # Model Selection & Caching
-YOLO_MODEL = "yolov8s.pt"  # Options: yolov8n (fast), yolov8s (balanced), yolov8m (accurate)
+YOLO_MODEL = "yolov8n.pt"  # Options: yolov8n (fast), yolov8s (balanced), yolov8m (accurate)
 ENABLE_MODEL_CACHE = True  # Cache model in memory between images
 MODEL_CACHE_TIMEOUT = 300  # Cache timeout in seconds
 

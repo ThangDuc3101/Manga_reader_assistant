@@ -173,6 +173,39 @@ class Manga_Reader:
             # Return original text if translation fails
             return text
     
+    def wrap_text(self, text, font, max_width):
+        """
+        Wrap text to fit within max_width.
+        
+        Args:
+            text (str): Text to wrap
+            font: PIL font object
+            max_width (int): Maximum width in pixels
+            
+        Returns:
+            list: List of wrapped lines
+        """
+        words = text.split()
+        lines = []
+        current_line = ""
+        
+        for word in words:
+            test_line = current_line + word + " " if current_line else word + " "
+            bbox = font.getbbox(test_line)
+            line_width = bbox[2] - bbox[0]
+            
+            if line_width <= max_width:
+                current_line = test_line
+            else:
+                if current_line:
+                    lines.append(current_line.strip())
+                current_line = word + " "
+        
+        if current_line:
+            lines.append(current_line.strip())
+        
+        return lines
+    
     def calculate_font_size(self, text, box_width, box_height, max_font_size=40):
         """
         Calculate appropriate font size for text to fit in textbox.
@@ -188,28 +221,44 @@ class Manga_Reader:
         """
         try:
             font_size = max_font_size
-            while font_size > 10:
+            padding = 10  # Padding từ edge của textbox
+            max_width = box_width - (padding * 2)
+            max_height = box_height - (padding * 2)
+            
+            while font_size > 8:
                 try:
                     font = ImageFont.truetype(self.font_path, font_size)
-                    bbox = font.getbbox(text)
-                    text_width = bbox[2] - bbox[0]
+                    lines = self.wrap_text(text, font, max_width)
                     
-                    if text_width <= box_width * 0.9:
+                    # Tính tổng height của tất cả lines
+                    bbox = font.getbbox("A")
+                    line_height = bbox[3] - bbox[1]
+                    total_height = len(lines) * (line_height + 3)  # 3px spacing
+                    
+                    if total_height <= max_height:
                         return font_size
-                except Exception:
-                    font_size -= 2
+                except Exception as e:
+                    logger.warning(f"Error in font size calculation: {e}")
+                    font_size -= 1
                     continue
                 
-                font_size -= 2
+                font_size -= 1
             
-            return 10
+            return 8
         except Exception as e:
-            logger.warning(f"Error calculating font size: {e}, using default 20")
-            return 20
+            logger.warning(f"Error calculating font size: {e}, using default 16")
+            return 16
 
     def process_chat(self, text, posText, img):
         """
         Process the chat text and add it to the image.
+        
+        Features:
+        - Dynamic font sizing
+        - Text wrapping to fit textbox width
+        - Clear original Japanese text with white background
+        - Center-aligned text rendering
+        - Graceful overflow handling
 
         Parameters:
             text (str): The text to be processed (Japanese).
@@ -227,56 +276,90 @@ class Manga_Reader:
             # Translate text to Vietnamese
             translated_text = self.translate_text(text)
             
-            draw = ImageDraw.Draw(img)
-            
-            # Calculate dimensions
+            # Get textbox dimensions
             x1, y1, x2, y2 = posText
             box_width = x2 - x1
             box_height = y2 - y1
+            padding = 10
             
-            # Clear original text by filling with white
+            # Validate dimensions
+            if box_width <= padding * 2 or box_height <= padding * 2:
+                logger.warning(f"Textbox too small: {box_width}x{box_height}")
+                return img
+            
+            # Step 1: Clear original text area with white background
             try:
-                draw.rectangle([x1, y1, x2, y2], fill="white")
-                logger.info("Cleared original text area")
+                draw = ImageDraw.Draw(img)
+                draw.rectangle([x1, y1, x2, y2], fill="white", outline=None)
+                logger.info(f"Cleared textbox area: ({x1}, {y1}) to ({x2}, {y2})")
             except Exception as e:
                 logger.warning(f"Error clearing text area: {e}")
             
-            # Calculate appropriate font size
+            # Step 2: Calculate appropriate font size
             font_size = self.calculate_font_size(translated_text, box_width, box_height)
             
+            # Step 3: Load font
             try:
                 font = ImageFont.truetype(self.font_path, font_size)
+                logger.info(f"Using font size: {font_size}pt")
             except Exception as e:
                 logger.warning(f"Error loading font: {e}, using default font")
                 font = ImageFont.load_default()
             
-            # Split text into lines
-            chat = translated_text.split(" ")
-            content = []
-            for i in range(len(chat)):
-                if i % 2 == 1:
-                    content.append(chat[i-1] + " " + chat[i])
-                
-                if (i == len(chat) - 1) and (i % 2 == 0):
-                    content.append(chat[i])
-                    break
-            
-            # Draw text
+            # Step 4: Wrap text to fit width
             try:
-                line_height = font_size + 5
-                for i, line in enumerate(content):
-                    y_pos = y1 + i * line_height
-                    if y_pos + font_size > y2:
-                        logger.warning("Text overflow in textbox")
-                        break
-                    draw.text((x1 + 5, y_pos), line, (255, 0, 0), font=font)
+                max_width = box_width - (padding * 2)
+                lines = self.wrap_text(translated_text, font, max_width)
+                logger.info(f"Text wrapped into {len(lines)} lines")
+            except Exception as e:
+                logger.error(f"Error wrapping text: {e}")
+                lines = [translated_text]
+            
+            # Step 5: Calculate text positioning (vertical centering)
+            try:
+                bbox = font.getbbox("A")
+                line_height = bbox[3] - bbox[1] + 3  # 3px spacing
+                total_text_height = len(lines) * line_height
                 
-                logger.info(f"Rendered {len(content)} lines of translated text")
+                # Center text vertically
+                available_height = box_height - (padding * 2)
+                start_y = y1 + padding + (available_height - total_text_height) // 2
+                
+                logger.info(f"Total text height: {total_text_height}px, positioning from y={start_y}")
+            except Exception as e:
+                logger.warning(f"Error calculating text positioning: {e}")
+                start_y = y1 + padding
+                line_height = font_size + 5
+            
+            # Step 6: Render text lines
+            try:
+                draw = ImageDraw.Draw(img)
+                rendered_lines = 0
+                
+                for i, line in enumerate(lines):
+                    y_pos = start_y + i * line_height
+                    
+                    # Check if line fits within textbox
+                    if y_pos + font_size > y2 - padding:
+                        logger.warning(f"Text overflow: Line {i+1} exceeds textbox height")
+                        break
+                    
+                    # Center text horizontally
+                    bbox = font.getbbox(line)
+                    line_width = bbox[2] - bbox[0]
+                    x_pos = x1 + padding + (max_width - line_width) // 2
+                    
+                    # Draw line
+                    draw.text((x_pos, y_pos), line, fill=(0, 0, 0), font=font)
+                    rendered_lines += 1
+                
+                logger.info(f"Successfully rendered {rendered_lines}/{len(lines)} lines of translated text")
+                
             except Exception as e:
                 logger.error(f"Error drawing text: {e}")
         
         except Exception as e:
-            logger.error(f"Error in process_chat: {e}")
+            logger.error(f"Fatal error in process_chat: {e}")
             # Return original image if processing fails
         
         return img

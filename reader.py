@@ -2,10 +2,11 @@ from ultralytics import YOLO
 from googletrans import Translator
 from PIL import Image, ImageDraw, ImageFont
 from manga_ocr import MangaOcr
-from roboflow import Roboflow
 from dotenv import load_dotenv
 import os
-import numpy as np
+import requests
+import base64
+from io import BytesIO
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,13 +23,12 @@ class Manga_Reader:
         self.use_roboflow = use_roboflow
         
         if use_roboflow:
-            # Roboflow API setup - sử dụng model comic-text-bubble-detection
-            api_key = os.getenv("ROBOFLOW_API_KEY", "")
-            if not api_key:
+            # Roboflow API setup - su dung model manga-bubble-pqdou
+            self.api_key = os.getenv("ROBOFLOW_API_KEY", "")
+            if not self.api_key:
                 raise ValueError("ROBOFLOW_API_KEY not found. Please set it in .env file")
-            rf = Roboflow(api_key=api_key)
-            project = rf.workspace().project("comic-text-bubble-detection-yfsxo")
-            self.model = project.version(1).model
+            self.model_id = "manga-bubble-pqdou/1"
+            self.api_url = f"https://detect.roboflow.com/{self.model_id}"
         else:
             # Local YOLO model
             if detector is None:
@@ -38,7 +38,7 @@ class Manga_Reader:
         self.recognizer = MangaOcr()        # Manga-OCR
         self.translator = Translator()      # Translator
         
-        # Font path - sử dụng đường dẫn tuyệt đối
+        # Font path - su dung duong dan tuyet doi
         self.font_path = os.path.join(os.path.dirname(__file__), "font", "arial.ttf")
         
     def detect(self, frame):
@@ -54,11 +54,23 @@ class Manga_Reader:
         textboxes = []
         
         if self.use_roboflow:
-            # Roboflow API - cần lưu ảnh tạm để predict
-            temp_path = "temp_frame.jpg"
-            frame.save(temp_path)
-            results = self.model.predict(temp_path, confidence=40).json()
-            os.remove(temp_path)
+            # Roboflow REST API - convert image to base64
+            # Convert RGBA to RGB if needed
+            if frame.mode == 'RGBA':
+                frame = frame.convert('RGB')
+            
+            buffered = BytesIO()
+            frame.save(buffered, format="JPEG")
+            img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+            
+            # Call Roboflow API
+            response = requests.post(
+                self.api_url,
+                params={"api_key": self.api_key, "confidence": 40},
+                data=img_base64,
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            results = response.json()
             
             for prediction in results.get("predictions", []):
                 x_center = prediction["x"]

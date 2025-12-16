@@ -8,6 +8,7 @@ import requests
 import base64
 from io import BytesIO
 import logging
+import time
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -16,16 +17,40 @@ logger = logging.getLogger(__name__)
 # Load environment variables from .env file
 load_dotenv()
 
+# Supported languages for translation
+SUPPORTED_LANGUAGES = {
+    'vi': 'Vietnamese',
+    'en': 'English',
+    'zh-CN': 'Chinese (Simplified)',
+    'zh-TW': 'Chinese (Traditional)',
+    'ko': 'Korean',
+    'th': 'Thai',
+    'es': 'Spanish',
+    'fr': 'French',
+    'de': 'German',
+    'pt': 'Portuguese',
+    'it': 'Italian',
+    'ru': 'Russian',
+}
+
 class Manga_Reader:
-    def __init__(self, detector=None, use_roboflow=True):
+    def __init__(self, detector=None, use_roboflow=True, target_language='vi'):
         """
         Initialize Manga Reader.
         
         Args:
             detector: Path to local YOLO model (if use_roboflow=False)
             use_roboflow: If True, use Roboflow API for detection
+            target_language: Target language code (default: 'vi' for Vietnamese)
         """
         self.use_roboflow = use_roboflow
+        self.target_language = target_language
+        self.processing_stats = {
+            'total_images': 0,
+            'processed_images': 0,
+            'total_textboxes': 0,
+            'total_time': 0
+        }
         
         try:
             if use_roboflow:
@@ -55,8 +80,8 @@ class Manga_Reader:
             raise
         
         try:
-            self.translator = GoogleTranslator(source='ja', target='vi')
-            logger.info("Google Translator initialized successfully")
+            self.translator = GoogleTranslator(source='ja', target=target_language)
+            logger.info(f"Google Translator initialized for ja → {target_language} ({SUPPORTED_LANGUAGES.get(target_language, 'Unknown')})")
         except Exception as e:
             logger.error(f"Error initializing translator: {e}")
             raise
@@ -69,6 +94,34 @@ class Manga_Reader:
             logger.warning(f"Font file not found at {self.font_path}")
         else:
             logger.info(f"Font file loaded: {self.font_path}")
+    
+    def set_target_language(self, language_code):
+        """Change target language for translation."""
+        try:
+            if language_code not in SUPPORTED_LANGUAGES:
+                logger.warning(f"Language {language_code} not supported. Using Vietnamese instead.")
+                language_code = 'vi'
+            
+            self.target_language = language_code
+            self.translator = GoogleTranslator(source='ja', target=language_code)
+            logger.info(f"Changed target language to {language_code} ({SUPPORTED_LANGUAGES.get(language_code)})")
+            return True
+        except Exception as e:
+            logger.error(f"Error changing language: {e}")
+            return False
+    
+    def get_stats(self):
+        """Get processing statistics."""
+        return self.processing_stats.copy()
+    
+    def reset_stats(self):
+        """Reset processing statistics."""
+        self.processing_stats = {
+            'total_images': 0,
+            'processed_images': 0,
+            'total_textboxes': 0,
+            'total_time': 0
+        }
     
     @retry(
         stop=stop_after_attempt(3),
@@ -374,8 +427,11 @@ class Manga_Reader:
         Returns:
             PIL.Image: Processed image with translations
         """
+        start_time = time.time()
+        
         try:
             logger.info("Starting manga processing pipeline")
+            self.processing_stats['total_images'] += 1
             
             # Detection
             try:
@@ -388,7 +444,10 @@ class Manga_Reader:
                 logger.info("No textboxes detected")
                 return img
             
+            self.processing_stats['total_textboxes'] += len(textboxes)
+            
             # Process each textbox
+            processed_count = 0
             for idx, textbox in enumerate(textboxes):
                 try:
                     logger.info(f"Processing textbox {idx+1}/{len(textboxes)}")
@@ -411,6 +470,7 @@ class Manga_Reader:
                     # Process and render
                     try:
                         img = self.process_chat(text, textbox, img)
+                        processed_count += 1
                     except Exception as e:
                         logger.error(f"Error processing chat {idx}: {e}")
                         continue
@@ -419,7 +479,11 @@ class Manga_Reader:
                     logger.error(f"Unexpected error processing textbox {idx}: {e}")
                     continue
             
-            logger.info("Pipeline completed successfully")
+            elapsed_time = time.time() - start_time
+            self.processing_stats['processed_images'] += 1
+            self.processing_stats['total_time'] += elapsed_time
+            
+            logger.info(f"Pipeline completed: {processed_count}/{len(textboxes)} textboxes processed in {elapsed_time:.2f}s")
             return img
         
         except Exception as e:

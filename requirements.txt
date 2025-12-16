@@ -1,7 +1,21 @@
-ultralytics
-streamlit
-streamlit_option_menu
-googletrans==3.1.0a0
-manga-ocr
-requests
-python-dotenv
+# Core dependencies
+ultralytics>=8.0.0          # YOLOv8 object detection
+streamlit>=1.28.0           # Web UI framework
+streamlit-option-menu>=0.3.2  # Sidebar menu component
+
+# Translation & OCR
+deep-translator>=1.11.0     # Google Translate API (replaces googletrans)
+manga-ocr>=0.1.11           # OCR specialized for manga Japanese text
+
+# API & Utilities
+requests>=2.31.0            # HTTP library for Roboflow API
+python-dotenv>=1.0.0        # Load environment variables from .env
+tenacity>=8.2.0             # Retry mechanism with exponential backoff
+
+# Image processing
+Pillow>=10.0.0              # PIL fork for image handling
+
+# Additional utilities
+numpy>=1.24.0               # Numerical computing
+torch>=2.0.0                # PyTorch (required by manga-ocr and transformers)
+transformers>=4.30.0        # Hugging Face transformers (required by manga-ocr)
